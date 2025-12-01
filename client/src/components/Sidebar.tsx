@@ -32,15 +32,6 @@ export function Sidebar({ activeSection, onSectionChange, isMobileOpen = false, 
     return saved ? JSON.parse(saved) : false;
   });
 
-  const [sidebarBgColor, setSidebarBgColor] = useState(() => {
-    // Initialize with light mode color, will update on mount
-    if (typeof window !== 'undefined') {
-      const isDark = document.documentElement.classList.contains('dark');
-      return isDark ? '#1e293b' : '#e0f2fe';
-    }
-    return '#e0f2fe';
-  });
-
   const [isDarkMode, setIsDarkMode] = useState(() => {
     if (typeof window !== 'undefined') {
       return document.documentElement.classList.contains('dark');
@@ -54,18 +45,17 @@ export function Sidebar({ activeSection, onSectionChange, isMobileOpen = false, 
   }, [isCollapsed, onCollapseChange]);
 
   useEffect(() => {
-    // Update sidebar color and dark mode state when theme changes
-    const updateColor = () => {
+    // Update dark mode state when theme changes
+    const updateDarkMode = () => {
       const isDark = document.documentElement.classList.contains('dark');
-      setSidebarBgColor(isDark ? '#1e293b' : '#e0f2fe');
       setIsDarkMode(isDark);
     };
 
     // Check on mount
-    updateColor();
+    updateDarkMode();
 
     // Watch for theme changes
-    const observer = new MutationObserver(updateColor);
+    const observer = new MutationObserver(updateDarkMode);
     observer.observe(document.documentElement, {
       attributes: true,
       attributeFilter: ['class']
@@ -109,21 +99,16 @@ export function Sidebar({ activeSection, onSectionChange, isMobileOpen = false, 
       {/* Sidebar */}
       <div 
         className={cn(
-          "h-screen border-r border-sidebar-border flex flex-col fixed left-0 top-0 shadow-lg transition-all duration-300 z-50",
-          "backdrop-blur-none",
+          "h-screen bg-background flex flex-col fixed left-0 top-0 shadow-[4px_0_12px_rgba(0,0,0,0.15)] dark:shadow-[4px_0_12px_rgba(0,0,0,0.4)] transition-all duration-300 z-50",
           sidebarWidth,
           "md:translate-x-0",
           isMobileOpen ? "translate-x-0" : "-translate-x-full"
         )}
-        style={{ 
-          backgroundColor: sidebarBgColor,
-          opacity: 1
-        }}
       >
         {/* Logo and Toggle Button */}
         <div className={cn(
-          "border-b border-sidebar-border bg-card/50 flex items-center transition-all relative",
-          isCollapsed ? "p-4 justify-center" : "p-6 justify-between"
+          "shadow-[0_2px_8px_rgba(0,0,0,0.08)] dark:shadow-[0_2px_8px_rgba(0,0,0,0.2)] flex items-center transition-all relative",
+          isCollapsed ? "p-4 justify-center" : "px-4 py-3 justify-between"
         )}>
           {isCollapsed ? (
             <>
@@ -144,9 +129,9 @@ export function Sidebar({ activeSection, onSectionChange, isMobileOpen = false, 
           ) : (
             <>
               <img 
-                src="/Full Logo.svg" 
+                src="/text.svg" 
                 alt="Momentum Logo" 
-                className="h-20 w-auto object-contain transition-all dark:brightness-0 dark:invert" 
+                className="h-10 w-auto object-contain transition-all dark:brightness-0 dark:invert" 
               />
               <div className="flex items-center gap-2">
                 {/* Mobile Close Button */}
@@ -229,7 +214,7 @@ export function Sidebar({ activeSection, onSectionChange, isMobileOpen = false, 
       </nav>
 
       {/* Footer */}
-      <div className="p-4 border-t border-sidebar-border bg-card/50">
+      <div className="p-4 shadow-[0_-2px_8px_rgba(0,0,0,0.08)] dark:shadow-[0_-2px_8px_rgba(0,0,0,0.2)]">
         <div className="space-y-2">
           {footerItems.map((item) => {
             const Icon = item.icon;
