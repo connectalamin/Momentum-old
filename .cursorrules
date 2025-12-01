@@ -69,10 +69,8 @@ Since the user is learning LangChain and ChromaDB, always:
 
 See `momentum-ai/AI_IMPLEMENTATION_GUIDE.md` for detailed examples and patterns.
 
-## Terminal & OS Rules (Windows/PowerShell)
+## Terminal & OS Rules
 
-- Always use Windows-supported commands (PowerShell or cmd-compatible). Prefer cross-shell commands (e.g., npm scripts) over PowerShell-only syntax unless strictly necessary.
-- Always use PowerShell-compatible commands for any terminal operations (Windows environment).
 - Before running any command, explicitly check and set the working directory.
   - Prefer `Get-Location` to confirm, and `Set-Location`/`cd` to change.
 - Before attempting to start any dev server or backend/AI service, first ask the user if it is already running and which ports are in use. Do not start processes without explicit confirmation.

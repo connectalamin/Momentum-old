@@ -1,0 +1,89 @@
+services:
+  backend:
+    # Use Debian-based Node image so Prisma has compatible OpenSSL/GLIBC
+    image: node:20
+    container_name: backend
+    working_dir: /app
+    volumes:
+      - ./backend:/app
+      - ./backend/node_modules:/app/node_modules
+    # Assumes dependencies are already installed on the host in ./backend/node_modules
+    # Build first, then run startup script that starts both Prisma Studio and Express server
+    command: sh -c "npm run build && sh /app/start.sh"
+    environment:
+      # Express server config
+      - NODE_ENV=development
+      - PORT=5000
+      # CORS origin the browser will use
+      - CLIENT_URL=http://localhost:3000
+      # Point backend to the AI microservice inside the compose network
+      - AI_SERVICE_URL=http://momentum-ai:8001
+      # Database connection for Prisma (PostgreSQL)
+      - DATABASE_URL=postgresql://momentum:momentum@db:5432/momentum
+    ports:
+      - "5000:5000"
+      - "5555:5555" # Prisma Studio
+    depends_on:
+      - momentum-ai
+      - db
+
+  client:
+    image: node:20-alpine
+    container_name: client
+    working_dir: /app
+    volumes:
+      - ./client:/app
+      - ./client/node_modules:/app/node_modules
+    # Assumes dependencies are already installed on the host in ./client/node_modules
+    command: sh -c "npm run dev -- --host 0.0.0.0 --port 3000"
+    environment:
+      # API URL that the browser (running on your host) will call
+      - VITE_API_URL=http://localhost:5000/api
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+
+  momentum-ai:
+    image: python:3.11-slim
+    container_name: momentum-ai
+    working_dir: /app
+    volumes:
+      - ./momentum-ai:/app
+      # Persist ChromaDB data locally
+      - 'chroma_db:/app/chroma_db'
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
+    environment:
+      - PORT=8001
+      # Shared Postgres DB URL for AI service (if/when needed)
+      - MOMENTUM_DB_URL=postgresql://momentum:momentum@db:5432/momentum
+    command: sh -c "pip install --no-cache-dir -r requirements.txt && uvicorn ai_service:app --host 0.0.0.0 --port 8001"
+    ports:
+      - "8001:8001"
+
+  db:
+    image: postgres:17-alpine
+    container_name: db
+    environment:
+      - POSTGRES_DB=momentum
+      - POSTGRES_USER=momentum
+      - POSTGRES_PASSWORD=momentum
+    volumes:
+      - 'postgres:/var/lib/postgresql/data'
+    ports:
+      - "5432:5432"
+
+networks:
+  default:
+    name: momentum-network
+
+volumes:
+  postgres:
+    driver: local
+  chroma_db:
+    driver: local
+  momentum-db-data:
+
+

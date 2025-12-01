@@ -126,11 +126,11 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     refreshUnreadCount();
   }, [fetchNotifications, refreshUnreadCount]);
 
-  // Refresh unread count every 30 seconds
+  // Refresh unread count every 60 seconds (reduced from 30s to reduce API calls)
   useEffect(() => {
     const interval = setInterval(() => {
       refreshUnreadCount();
-    }, 30000);
+    }, 60000);
 
     return () => clearInterval(interval);
   }, [refreshUnreadCount]);

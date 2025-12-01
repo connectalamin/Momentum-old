@@ -1,5 +1,7 @@
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
+  // Include linux-musl so Prisma works inside the Node Alpine (musl) Docker image
+  binaryTargets = ["native", "linux-musl"]
 }
 
 datasource db {

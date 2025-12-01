@@ -7,12 +7,27 @@ import { authenticate } from '../middleware/auth.middleware';
 const router = Router();
 
 // Stricter rate limiting for auth endpoints
+// Configurable via RATE_LIMIT_AUTH_MAX env var (defaults to 5 for security)
+const authMaxRequests = process.env.RATE_LIMIT_AUTH_MAX
+  ? parseInt(process.env.RATE_LIMIT_AUTH_MAX, 10)
+  : 5;
+
+const rateLimitWindowMs = process.env.RATE_LIMIT_WINDOW_MS
+  ? parseInt(process.env.RATE_LIMIT_WINDOW_MS, 10)
+  : 15 * 60 * 1000;
+
 const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // Limit each IP to 5 requests per windowMs
-  message: 'Too many authentication attempts, please try again later.',
+  windowMs: rateLimitWindowMs,
+  max: authMaxRequests,
   standardHeaders: true,
   legacyHeaders: false,
+  handler: (req, res) => {
+    res.status(429).json({
+      error: 'Too many authentication attempts',
+      message: 'Too many authentication attempts, please try again later.',
+      statusCode: 429
+    });
+  },
 });
 
 // Register route

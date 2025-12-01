@@ -30,20 +30,57 @@ const app: Application = express();
 const PORT = process.env.PORT || 5000;
 
 // Rate limiting configuration
+// Configurable via environment variables with sensible defaults
+const isDevelopment = process.env.NODE_ENV !== 'production';
+
+// API rate limit: Can be set via RATE_LIMIT_MAX env var
+// Defaults: 5000 for development, 100 for production
+const apiMaxRequests = process.env.RATE_LIMIT_MAX 
+  ? parseInt(process.env.RATE_LIMIT_MAX, 10)
+  : (isDevelopment ? 5000 : 100);
+
+// Auth rate limit: Can be set via RATE_LIMIT_AUTH_MAX env var
+// Defaults to 5 for security (kept strict)
+const authMaxRequests = process.env.RATE_LIMIT_AUTH_MAX
+  ? parseInt(process.env.RATE_LIMIT_AUTH_MAX, 10)
+  : 5;
+
+// Rate limit window (15 minutes)
+const rateLimitWindowMs = process.env.RATE_LIMIT_WINDOW_MS
+  ? parseInt(process.env.RATE_LIMIT_WINDOW_MS, 10)
+  : 15 * 60 * 1000;
+
+console.log(`📊 Rate Limiting Configuration:
+  - API Limit: ${apiMaxRequests} requests per ${rateLimitWindowMs / 1000 / 60} minutes
+  - Auth Limit: ${authMaxRequests} requests per ${rateLimitWindowMs / 1000 / 60} minutes
+  - Environment: ${process.env.NODE_ENV || 'development'}`);
+
 const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // Limit each IP to 5 requests per windowMs
-  message: 'Too many authentication attempts, please try again later.',
+  windowMs: rateLimitWindowMs,
+  max: authMaxRequests,
   standardHeaders: true,
   legacyHeaders: false,
+  handler: (req, res) => {
+    res.status(429).json({
+      error: 'Too many authentication attempts',
+      message: 'Too many authentication attempts, please try again later.',
+      statusCode: 429
+    });
+  },
 });
 
 const apiLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // Limit each IP to 100 requests per windowMs
-  message: 'Too many requests from this IP, please try again later.',
+  windowMs: rateLimitWindowMs,
+  max: apiMaxRequests,
   standardHeaders: true,
   legacyHeaders: false,
+  handler: (req, res) => {
+    res.status(429).json({
+      error: 'Too many requests',
+      message: 'Too many requests from this IP, please try again later.',
+      statusCode: 429
+    });
+  },
 });
 
 // Validate required environment variables in production

@@ -54,8 +54,44 @@ export const apiRequest = async <T>(
     clearTimeout(timeoutId);
     
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || error.message || 'Something went wrong');
+      // Handle rate limiting (429) with special message
+      if (response.status === 429) {
+        let errorMessage = 'Too many requests. Please wait a moment and try again.';
+        try {
+          const error = await response.json();
+          errorMessage = error.error || error.message || errorMessage;
+        } catch {
+          // If JSON parsing fails, try to get text
+          try {
+            const text = await response.text();
+            if (text) {
+              errorMessage = text;
+            }
+          } catch {
+            // If both fail, use default message
+          }
+        }
+        throw new Error(errorMessage);
+      }
+      
+      // For other errors, try to parse JSON first
+      let errorMessage = 'Something went wrong';
+      try {
+        const error = await response.json();
+        errorMessage = error.error || error.message || error.error?.message || errorMessage;
+      } catch {
+        // If JSON parsing fails, try to get text
+        try {
+          const text = await response.text();
+          if (text) {
+            errorMessage = text;
+          }
+        } catch {
+          // If both fail, use status text or default
+          errorMessage = response.statusText || errorMessage;
+        }
+      }
+      throw new Error(errorMessage);
     }
 
     return await response.json();
@@ -64,6 +100,7 @@ export const apiRequest = async <T>(
       if (error.name === 'AbortError') {
         throw new Error('Request timeout - the operation is taking longer than expected. Please try again.');
       }
+      // Re-throw errors that are already Error instances (including our custom ones)
       throw error;
     }
     throw new Error('Network error occurred');
