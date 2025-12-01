@@ -123,15 +123,78 @@ sleep 20
 echo ""
 echo -e "${BLUE}🗄️  Step 6: Running Database Migrations${NC}"
 echo "Connecting to database and applying Prisma migrations..."
-if docker exec backend npx prisma migrate deploy 2>/dev/null; then
+
+# Ensure backend container is running
+if ! docker ps --format "{{.Names}}" | grep -q "^backend$"; then
+    echo "Starting backend container..."
+    docker start backend
+    sleep 5
+fi
+
+# Run migrations with proper error handling
+MIGRATE_OUTPUT=$(docker exec backend npx prisma migrate deploy 2>&1)
+MIGRATE_EXIT_CODE=$?
+
+if [ $MIGRATE_EXIT_CODE -eq 0 ]; then
     echo -e "${GREEN}✓ Database migrations applied successfully${NC}"
+    # Check if there were pending migrations
+    if echo "$MIGRATE_OUTPUT" | grep -q "No pending migrations"; then
+        echo "  (All migrations were already applied)"
+    fi
 else
-    echo -e "${YELLOW}⚠ Migrations may have already been applied or backend not ready yet${NC}"
-    echo "You can run this manually later: docker exec backend npx prisma migrate deploy"
+    echo -e "${RED}✗ Migrations failed with exit code $MIGRATE_EXIT_CODE${NC}"
+    echo "Error output:"
+    echo "$MIGRATE_OUTPUT" | tail -20
+    echo ""
+    echo -e "${YELLOW}⚠ You can try running migrations manually:${NC}"
+    echo "  docker exec backend npx prisma migrate deploy"
 fi
 
 echo ""
-echo -e "${BLUE}📋 Step 7: Verifying Services${NC}"
+echo -e "${BLUE}🌱 Step 7: Seeding Database with Bangladeshi Context Data${NC}"
+echo "Running Prisma seed to populate sample users..."
+
+# Ensure backend container is running
+if ! docker ps --format "{{.Names}}" | grep -q "^backend$"; then
+    echo "Starting backend container..."
+    docker start backend
+    sleep 5
+fi
+
+# Wait for backend to be ready (check if node_modules exists and backend is responsive)
+echo "Waiting for backend to be ready..."
+for i in {1..30}; do
+    if docker exec backend sh -c "test -d /app/node_modules && test -f /app/node_modules/.bin/ts-node" 2>/dev/null; then
+        echo -e "${GREEN}✓ Backend is ready${NC}"
+        break
+    fi
+    if [ $i -eq 30 ]; then
+        echo -e "${YELLOW}⚠ Backend took longer than expected to be ready${NC}"
+    else
+        sleep 1
+    fi
+done
+
+# Run the seed command with proper error handling
+echo "Running seed command..."
+SEED_OUTPUT=$(docker exec backend npx prisma db seed 2>&1)
+SEED_EXIT_CODE=$?
+
+if [ $SEED_EXIT_CODE -eq 0 ]; then
+    echo -e "${GREEN}✓ Database seeded successfully with Bangladeshi context data${NC}"
+    # Show summary if available
+    echo "$SEED_OUTPUT" | grep -E "(Total users created|Database seed completed)" || true
+else
+    echo -e "${RED}✗ Seed failed with exit code $SEED_EXIT_CODE${NC}"
+    echo "Error output:"
+    echo "$SEED_OUTPUT" | tail -20
+    echo ""
+    echo -e "${YELLOW}⚠ You can try running the seed manually:${NC}"
+    echo "  docker exec backend npx prisma db seed"
+fi
+
+echo ""
+echo -e "${BLUE}📋 Step 8: Verifying Services${NC}"
 echo "Checking service health..."
 
 # Check backend
