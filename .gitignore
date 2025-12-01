@@ -23,13 +23,15 @@ Thumbs.db
 *.swo
 
 # Python
-
-
+__pycache__/
+**/__pycache__/
 *.py[cod]
 *$py.class
 *.so
 .Python
 *.egg-info/
+*.pyc
+**/*.pyc
 dist/
 build/
 .venv/
