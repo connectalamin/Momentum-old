@@ -14,7 +14,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Menu,
-  X
+  X,
+  Network
 } from 'lucide-react';
 import { cn } from './ui/utils';
 
@@ -73,6 +74,7 @@ export function Sidebar({ activeSection, onSectionChange, isMobileOpen = false, 
     { id: 'planner', label: 'Daily Planner', icon: Calendar },
     { id: 'academics', label: 'Academics', icon: GraduationCap },
     { id: 'skills', label: 'Skills', icon: Lightbulb },
+    { id: 'mindmaps', label: 'Mind Maps', icon: Network },
     { id: 'finances', label: 'Finances', icon: Wallet },
     { id: 'lifestyle', label: 'Habit', icon: Heart },
     { id: 'journal', label: 'Journal', icon: BookOpen },

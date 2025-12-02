@@ -20,6 +20,7 @@ import aiRoutes from './routes/ai.routes';
 import habitRoutes from './routes/habit.routes';
 import learningRoutes from './routes/learning.routes';
 import notificationRoutes from './routes/notification.routes';
+import mindmapRoutes from './routes/mindmap.routes';
 import { startDailySummaryScheduler } from './services/scheduler.service';
 import { runMigrations } from './migrate';
 
@@ -151,6 +152,7 @@ app.use('/api/ai', aiRoutes);
 app.use('/api/habits', habitRoutes);
 app.use('/api/learning', learningRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/mindmaps', mindmapRoutes);
 
 // Health check route
 app.get('/api/health', (req: express.Request, res: express.Response) => {

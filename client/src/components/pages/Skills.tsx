@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
-import { Plus, Target, TrendingUp, Sparkles, Pencil, Trash2, Check, AlertTriangle, Loader2, ArrowRight } from 'lucide-react';
+import { Plus, Target, TrendingUp, Sparkles, Pencil, Trash2, Check, AlertTriangle, Loader2, ArrowRight, Network } from 'lucide-react';
 import { Card } from '../ui/card';
 import { Button } from '../ui/button';
 import { Progress } from '../ui/progress';
 import { Badge } from '../ui/badge';
 import { SkillModal } from '../modals/SkillModal';
 import { skillsAPI } from '@/lib/api';
+import { mindMapAPI } from '@/lib/mindmap.api';
 import { toast } from 'sonner';
 import {
   AlertDialog,
@@ -234,6 +235,31 @@ export function Skills() {
     }));
   };
 
+  const handleGenerateMindMapFromSkill = async (skillId: string) => {
+    try {
+      toast.info('Generating mind map from skill...');
+      const generatedData = await mindMapAPI.generateFromSkill(skillId);
+      
+      // Create the mind map with generated data
+      const mindMap = await mindMapAPI.createMindMap({
+        title: generatedData.title,
+        description: generatedData.description,
+        type: 'skill',
+        nodes: generatedData.nodes,
+        edges: generatedData.edges,
+        metadata: { aiGenerated: true, fromSkill: skillId },
+      });
+
+      toast.success('Mind map generated successfully! Check the Mind Maps page.');
+      
+      // Optionally, redirect to mind maps page
+      // window.location.href = '/mindmaps';
+    } catch (error) {
+      console.error('Error generating mind map from skill:', error);
+      toast.error('Failed to generate mind map from skill');
+    }
+  };
+
   const completedMilestones = skills.reduce((acc, skill) => 
     acc + (skill.milestones?.filter((m: any) => m.completed).length || 0), 0
   );
@@ -388,6 +414,18 @@ export function Skills() {
                         title="Edit skill"
                       >
                         <Pencil className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 opacity-60 hover:opacity-100 hover:text-primary transition-all"
+                        onClick={(e: React.MouseEvent) => {
+                          e.stopPropagation();
+                          handleGenerateMindMapFromSkill(skill.id);
+                        }}
+                        title="Generate mind map"
+                      >
+                        <Network className="w-4 h-4" />
                       </Button>
                       <Button
                         variant="ghost"

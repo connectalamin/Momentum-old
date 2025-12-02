@@ -14,6 +14,7 @@ import { PersonalizedAssistant } from './components/pages/PersonalizedAssistant'
 import { DailyPlanner } from './components/pages/DailyPlanner';
 import { Academics } from './components/pages/Academics';
 import { Skills } from './components/pages/Skills';
+import { MindMaps } from './components/pages/MindMaps';
 import { Finances } from './components/pages/Finances';
 import { Lifestyle } from './components/pages/Lifestyle';
 import { Journal } from './components/pages/Journal';
@@ -117,6 +118,8 @@ function MainLayout() {
         return <Academics />;
       case 'skills':
         return <Skills />;
+      case 'mindmaps':
+        return <MindMaps />;
       case 'finances':
         return <Finances />;
       case 'lifestyle':

@@ -55,6 +55,8 @@ services:
     dns:
       - 8.8.8.8
       - 1.1.1.1
+    env_file:
+      - ./momentum-ai/.env
     environment:
       - PORT=8001
       # Shared Postgres DB URL for AI service (if/when needed)
