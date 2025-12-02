@@ -115,12 +115,15 @@ app.use(helmet({
 }));
 
 // CORS configuration - normalize URL by removing trailing slashes
+// Base host for frontend, configurable via .env (BASE_HOST)
+const baseHost = process.env.BASE_HOST || 'http://localhost:5173';
+
 const normalizeUrl = (url: string | undefined): string => {
-  if (!url) return 'http://localhost:5173';
+  if (!url) return baseHost;
   return url.replace(/\/+$/, ''); // Remove trailing slashes
 };
 
-const corsOrigin = normalizeUrl(clientUrl) || (process.env.VERCEL_URL ? `https://${normalizeUrl(process.env.VERCEL_URL)}` : 'http://localhost:5173');
+const corsOrigin = normalizeUrl(clientUrl) || (process.env.VERCEL_URL ? `https://${normalizeUrl(process.env.VERCEL_URL)}` : baseHost);
 
 app.use(cors({
   origin: corsOrigin,

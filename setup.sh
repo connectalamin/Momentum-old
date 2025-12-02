@@ -20,6 +20,28 @@ NC='\033[0m' # No Color
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd "$SCRIPT_DIR"
 
+# Load .env file if it exists
+if [ -f "$SCRIPT_DIR/.env" ]; then
+    echo "Loading environment variables from .env file..."
+    # Export variables from .env file, ignoring comments and empty lines
+    set -a  # Automatically export all variables
+    # Use a temporary file to filter comments and empty lines, then source it
+    grep -v '^[[:space:]]*#' "$SCRIPT_DIR/.env" | grep -v '^[[:space:]]*$' > "$SCRIPT_DIR/.env.tmp" 2>/dev/null || true
+    if [ -f "$SCRIPT_DIR/.env.tmp" ] && [ -s "$SCRIPT_DIR/.env.tmp" ]; then
+        source "$SCRIPT_DIR/.env.tmp"
+        rm -f "$SCRIPT_DIR/.env.tmp"
+    fi
+    set +a  # Stop automatically exporting
+    echo -e "${GREEN}✓ Environment variables loaded from .env${NC}"
+else
+    echo -e "${YELLOW}⚠ .env file not found, using defaults${NC}"
+fi
+
+# Base host for all local HTTP checks/URLs.
+# Can be overridden by exporting BASE_HOST before running this script.
+# This will use BASE_HOST from .env if loaded, otherwise default to http://localhost
+BASE_HOST="${BASE_HOST:-http://localhost}"
+
 echo -e "${BLUE}🐳 Step 1: Starting Docker Containers${NC}"
 cd "$SCRIPT_DIR"
 echo "Starting all services with docker compose..."
@@ -198,29 +220,29 @@ echo -e "${BLUE}📋 Step 8: Verifying Services${NC}"
 echo "Checking service health..."
 
 # Check backend
-if curl -sS http://localhost:5000/api/health > /dev/null 2>&1; then
-    echo -e "${GREEN}✓ Backend is running on http://localhost:5000${NC}"
+if curl -sS "$BASE_HOST:5000/api/health" > /dev/null 2>&1; then
+    echo -e "${GREEN}✓ Backend is running on $BASE_HOST:5000${NC}"
 else
     echo -e "${YELLOW}⚠ Backend health check failed (may still be starting)${NC}"
 fi
 
 # Check client
-if curl -sS http://localhost:3000 > /dev/null 2>&1; then
-    echo -e "${GREEN}✓ Client is running on http://localhost:3000${NC}"
+if curl -sS "$BASE_HOST:3000" > /dev/null 2>&1; then
+    echo -e "${GREEN}✓ Client is running on $BASE_HOST:3000${NC}"
 else
     echo -e "${YELLOW}⚠ Client health check failed (may still be starting)${NC}"
 fi
 
 # Check momentum-ai
-if curl -sS http://localhost:8001/health > /dev/null 2>&1; then
-    echo -e "${GREEN}✓ Momentum AI is running on http://localhost:8001${NC}"
+if curl -sS "$BASE_HOST:8001/health" > /dev/null 2>&1; then
+    echo -e "${GREEN}✓ Momentum AI is running on $BASE_HOST:8001${NC}"
 else
     echo -e "${YELLOW}⚠ Momentum AI health check failed (may still be starting)${NC}"
 fi
 
 # Check database
 if docker exec db pg_isready -U momentum > /dev/null 2>&1; then
-    echo -e "${GREEN}✓ Database is running on localhost:5432${NC}"
+    echo -e "${GREEN}✓ Database is running on $BASE_HOST:5432${NC}"
 else
     echo -e "${YELLOW}⚠ Database health check failed${NC}"
 fi
@@ -229,10 +251,10 @@ echo ""
 echo -e "${GREEN}🎉 Setup Complete!${NC}"
 echo ""
 echo "Services are starting up. You can access:"
-echo "  • Frontend:    http://localhost:3000"
-echo "  • Backend API: http://localhost:5000/api"
-echo "  • AI Service:  http://localhost:8001"
-echo "  • Prisma Studio: http://localhost:5555"
+echo "  • Frontend:    $BASE_HOST:3000"
+echo "  • Backend API: $BASE_HOST:5000/api"
+echo "  • AI Service:  $BASE_HOST:8001"
+echo "  • Prisma Studio: $BASE_HOST:5555"
 echo ""
 echo "To view logs:"
 echo "  docker compose logs -f"
@@ -243,4 +265,3 @@ echo ""
 echo "To restart services:"
 echo "  docker compose restart"
 echo ""
-

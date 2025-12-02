@@ -15,7 +15,8 @@ services:
       - NODE_ENV=development
       - PORT=5000
       # CORS origin the browser will use
-      - CLIENT_URL=http://localhost:3000
+      # BASE_HOST comes from .env (e.g. BASE_HOST=http://localhost)
+      - CLIENT_URL=${BASE_HOST:-http://localhost}:3000
       # Point backend to the AI microservice inside the compose network
       - AI_SERVICE_URL=http://momentum-ai:8001
       # Database connection for Prisma (PostgreSQL)
@@ -38,7 +39,8 @@ services:
     command: sh -c "npm run dev -- --host 0.0.0.0 --port 3000"
     environment:
       # API URL that the browser (running on your host) will call
-      - VITE_API_URL=http://localhost:5000/api
+      # BASE_HOST comes from .env (e.g. BASE_HOST=http://localhost)
+      - VITE_API_URL=${BASE_HOST:-http://localhost}:5000/api
     ports:
       - "3000:3000"
     depends_on:
