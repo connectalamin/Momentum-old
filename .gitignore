@@ -44,8 +44,7 @@ chroma_db/
 *.sqlite3
 *.db
 
-# Prisma
-backend/prisma/migrations/
+
 
 # TypeScript
 *.tsbuildinfo
